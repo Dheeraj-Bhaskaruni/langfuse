@@ -12,6 +12,7 @@ import { IOTableCell } from "../../ui/IOTableCell";
 import { Avatar, AvatarImage } from "@/src/components/ui/avatar";
 import useColumnVisibility from "@/src/features/column-visibility/hooks/useColumnVisibility";
 import { useSidebarFilterState } from "@/src/features/filters/hooks/useSidebarFilterState";
+import { usePeekTableState } from "@/src/components/table/peek/contexts/PeekTableStateContext";
 import {
   scoreFilterConfig,
   SCORE_COLUMN_TO_BACKEND_KEY,
@@ -114,6 +115,7 @@ export default function ScoresTable({
   localStorageSuffix?: string;
   disableUrlPersistence?: boolean;
 }) {
+  const peekContext = usePeekTableState();
   const { isBetaEnabled } = useV4Beta();
   // In v4beta, scores must exclusively use events-backed endpoints (no traces-table route).
   const useEventsBackedScores = isBetaEnabled;
@@ -292,8 +294,17 @@ export default function ScoresTable({
     newFilterOptions,
     {
       loading: filterOptions.isPending || environmentFilterOptions.isPending,
-      disableUrlPersistence,
-      sessionFilterContextId: projectId,
+      stateLocation: peekContext
+        ? [{ type: "peekContext", context: peekContext }]
+        : disableUrlPersistence
+          ? [{ type: "memory" }]
+          : [
+              { type: "url" },
+              {
+                type: "sessionStorage",
+                sessionFilterContextId: projectId,
+              },
+            ],
       // Sidebar-only implicit environment defaults
       implicitDefaultConfig: DEFAULT_SIDEBAR_IMPLICIT_ENVIRONMENT_CONFIG,
     },
